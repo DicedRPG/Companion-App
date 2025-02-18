@@ -7,9 +7,9 @@
     <title>Diced:RPG Companion</title>
     <style>
         :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f5f5f5;
-            --border-color: #ddd;
+            --primary-color: #A2BC58;
+            --secondary-color: #F1DEBD;
+            --border-color: #4A2A1B;
         }
 
         body {
@@ -277,6 +277,31 @@
         grid-template-columns: 1fr;
     }
 }
+
+.quest-item.completed {
+    border-left: 3px solid #A2BC58; /* Green border for completed quests */
+}
+
+.completion-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #ffffff;
+    background-color: #a2bc58;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.completion-count {
+    color: #A2BC58;
+    font-weight: 600;
+}
+
+.completed-text {
+    color: #0E7C7B;
+    font-size: 0.9em;
+}
     </style>
 </head>
 <body>
@@ -510,36 +535,42 @@ const LEVELS = [
 
         // State Management
         const state = {
-            attributeHours: {
-                technique: 0,
-                ingredients: 0,
-                flavor: 0,
-                management: 0
-            },
-            
-            load() {
-                try {
-                    if (isStorageAvailable()) {
-                        const savedState = localStorage.getItem('culinaryRPG');
-                        if (savedState) {
-                            this.attributeHours = JSON.parse(savedState);
-                        }
-                    }
-                } catch (error) {
-                    console.warn('Could not load state:', error);
-                }
-            },
-            
-            save() {
-                try {
-                    if (isStorageAvailable()) {
-                        localStorage.setItem('culinaryRPG', JSON.stringify(this.attributeHours));
-                    }
-                } catch (error) {
-                    console.warn('Could not save state:', error);
+    attributeHours: {
+        technique: 0,
+        ingredients: 0,
+        flavor: 0,
+        management: 0
+    },
+    completedQuests: [], // Array to store completed quest IDs with timestamps
+    
+    load() {
+        try {
+            if (isStorageAvailable()) {
+                const savedState = localStorage.getItem('culinaryRPG');
+                if (savedState) {
+                    const parsed = JSON.parse(savedState);
+                    this.attributeHours = parsed.attributeHours || this.attributeHours;
+                    this.completedQuests = parsed.completedQuests || [];
                 }
             }
-        };
+        } catch (error) {
+            console.warn('Could not load state:', error);
+        }
+    },
+    
+    save() {
+        try {
+            if (isStorageAvailable()) {
+                localStorage.setItem('culinaryRPG', JSON.stringify({
+                    attributeHours: this.attributeHours,
+                    completedQuests: this.completedQuests
+                }));
+            }
+        } catch (error) {
+            console.warn('Could not save state:', error);
+        }
+    }
+};
 
         // Utility Functions
         function calculateLevel(totalHours) {
@@ -800,57 +831,153 @@ const questSystem = {
     },
     
     showQuestList() {
-        const questList = document.getElementById('quest-list');
-        const currentQuest = document.getElementById('current-quest');
-        
-        questList.innerHTML = QUEST_DATA.map(quest => `
-            <div class="quest-item" onclick="questSystem.showQuestDetails(${JSON.stringify(quest).replace(/"/g, '&quot;')})">
-                <h4 class="font-semibold mb-1">${quest.questName}</h4>
-                <p class="text-sm text-gray-600">${quest.type}</p>
-            </div>
-        `).join('');
-        
-        questList.classList.remove('hidden');
-        currentQuest.classList.add('hidden');
-    },
+    const questList = document.getElementById('quest-list');
+    const currentQuest = document.getElementById('current-quest');
     
-    showQuestDetails(quest) {
-        const questList = document.getElementById('quest-list');
-        const currentQuest = document.getElementById('current-quest');
-        
-        currentQuest.innerHTML = `
-            <div class="quest-details">
-                <div class="quest-header">
+    if (!questList || !currentQuest) {
+        console.error('Required elements not found');
+        return;
+    }
+    
+    questList.innerHTML = QUEST_DATA.map(quest => {
+        const completions = state.completedQuests.filter(c => c.questId === quest.id);
+        const completionCount = completions.length;
+        const lastCompletion = completions.length > 0 
+            ? new Date(completions[completions.length - 1].completedAt)
+            : null;
+            
+        return `
+            <div class="quest-item ${completionCount > 0 ? 'completed' : ''}" 
+                 onclick="questSystem.showQuestDetails(${JSON.stringify(quest).replace(/"/g, '&quot;')})">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h4 class="text-xl font-bold mb-1">${quest.questName}</h4>
-                        <p class="text-sm text-gray-600">${quest.rank} • ${quest.type}</p>
+                        <h4 class="font-semibold mb-1">${quest.questName}</h4>
+                        <p class="text-sm text-gray-600">${quest.type}</p>
                     </div>
-                    ${quest.diceRequired ? `
-                        <div class="quest-dice-required">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h14V5H5zm4.5 6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-5 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                    ${completionCount > 0 ? `
+                        <div class="completion-badge" title="Last completed: ${lastCompletion.toLocaleDateString()}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
                             </svg>
-                            Dice Roll Required
+                            ${completionCount > 1 ? `<span class="completion-count">×${completionCount}</span>` : ''}
                         </div>
                     ` : ''}
                 </div>
-                <p class="text-gray-700 mb-4">${quest.description}</p>
-                <div class="quest-focus-grid">
-                    <div class="focus-box primary">
-                        <p class="text-sm font-semibold text-blue-700">Primary Focus</p>
-                        <p class="text-lg">${quest.primaryFocus} • ${quest.primaryHours}h</p>
-                    </div>
-                    <div class="focus-box secondary">
-                        <p class="text-sm font-semibold text-green-700">Secondary Focus</p>
-                        <p class="text-lg">${quest.secondaryFocus} • ${quest.secondaryHours}h</p>
-                    </div>
-                </div>
             </div>
         `;
-        
-        questList.classList.add('hidden');
-        currentQuest.classList.remove('hidden');
+    }).join('');
+    
+    questList.classList.remove('hidden');
+    currentQuest.classList.add('hidden');
+},
+    
+    showQuestDetails(quest) {
+    const questList = document.getElementById('quest-list');
+    const currentQuest = document.getElementById('current-quest');
+    
+    if (!questList || !currentQuest) {
+        console.error('Required elements not found');
+        return;
     }
+    
+    const completions = state.completedQuests.filter(c => c.questId === quest.id);
+    const completionCount = completions.length;
+    const lastCompletion = completions.length > 0 
+        ? new Date(completions[completions.length - 1].completedAt)
+        : null;
+        
+    currentQuest.innerHTML = `
+        <div class="quest-details">
+            <div class="quest-header">
+                <div>
+                    <h4 class="text-xl font-bold mb-1">${quest.questName}</h4>
+                    <p class="text-sm text-gray-600">
+                        ${quest.rank} • ${quest.type}
+                        ${completionCount > 0 ? `
+                            <span class="completed-text">
+                                • Completed ${completionCount} time${completionCount > 1 ? 's' : ''}
+                                (Last: ${lastCompletion.toLocaleDateString()})
+                            </span>
+                        ` : ''}
+                    </p>
+                </div>
+                ${quest.diceRequired ? `
+                    <div class="quest-dice-required">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                            <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h14V5H5zm4.5 6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-5 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                        </svg>
+                        Dice Roll Required
+                    </div>
+                ` : ''}
+            </div>
+            <p class="text-gray-700 mb-4">${quest.description}</p>
+            <div class="quest-focus-grid">
+                <div class="focus-box primary">
+                    <p class="text-sm font-semibold text-blue-700">Primary Focus</p>
+                    <p class="text-lg">${quest.primaryFocus} • ${quest.primaryHours}h</p>
+                </div>
+                <div class="focus-box secondary">
+                    <p class="text-sm font-semibold text-green-700">Secondary Focus</p>
+                    <p class="text-lg">${quest.secondaryFocus} • ${quest.secondaryHours}h</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button 
+                    onclick="questSystem.completeQuest(${JSON.stringify(quest).replace(/"/g, '&quot;')})"
+                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                >
+                    Complete Quest
+                </button>
+            </div>
+        </div>
+    `;
+    
+    questList.classList.add('hidden');
+    currentQuest.classList.remove('hidden');
+},
+    completeQuest(quest) {
+    if (!quest) {
+        console.error('No quest provided to complete');
+        return;
+    }
+    state.completedQuests.push({
+        questId: quest.id,
+        completedAt: new Date().toISOString()
+    });
+
+    // Confirm with user
+    const confirmMessage = `Complete ${quest.questName}?\nThis will add:\n` +
+        `${quest.primaryHours}h to ${quest.primaryFocus}\n` +
+        `${quest.secondaryHours}h to ${quest.secondaryFocus}`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    // Add primary hours
+    const primaryAttribute = quest.primaryFocus.toLowerCase();
+    if (state.attributeHours.hasOwnProperty(primaryAttribute)) {
+        state.attributeHours[primaryAttribute] += quest.primaryHours;
+    }
+
+    // Add secondary hours
+    const secondaryAttribute = quest.secondaryFocus.toLowerCase();
+    if (state.attributeHours.hasOwnProperty(secondaryAttribute)) {
+        state.attributeHours[secondaryAttribute] += quest.secondaryHours;
+    }
+
+    // Save state and update display
+    state.save();
+    updateDisplay();
+
+    // Show completion message
+    alert(`Quest completed! Hours added:\n` +
+        `${quest.primaryHours}h to ${quest.primaryFocus}\n` +
+        `${quest.secondaryHours}h to ${quest.secondaryFocus}`);
+
+    // Return to quest list
+    this.showQuestList();
+}
 };
 // Define test quest data
 const QUEST_DATA = [
