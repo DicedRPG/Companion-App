@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="sandbox allow-same-origin allow-scripts">
+    <title>Diced:RPG Companion</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f5f5;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .overall-rank-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: 2px solid var(--primary-color);
+        }
+
+        .attributes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .attribute-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .attribute-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .attribute-icon {
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--secondary-color);
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .stats {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .add-hours-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .add-hours-card .input-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .add-hours-card input,
+        .add-hours-card select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .add-hours-card button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .add-hours-card button:hover {
+            opacity: 0.9;
+        }
+
+        .gated-warning {
+            color: #e67e22;
+            font-size: 0.8em;
+            margin-top: 8px;
+            padding: 4px;
+            background-color: #fff3e0;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .attributes-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .add-hours-card .input-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>Diced:RPG Companion</h1>
+        </div>
+
+        <div class="overall-rank-card">
+            <div class="attribute-header">
+                <div class="attribute-icon">O</div>
+                <h3>Overall Rank</h3>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="stats">
+                <p>Current Rank: <span id="overall-rank">Home Cook (Bronze)</span></p>
+                <p>Total Hours: <span id="overall-hours">0</span> / <span id="overall-next-rank">220</span> for next rank</p>
+            </div>
+        </div>
+
+        <div class="attributes-grid">
+            <div class="attribute-card">
+                <div class="attribute-header">
+                    <div class="attribute-icon">T</div>
+                    <h3>Technique</h3>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 25%"></div>
+                </div>
+                <div class="stats">
+                    <p>Current Rank: Home Cook</p>
+                    <p>Hours: <span id="technique-hours">0</span> / <span id="technique-next-level">5</span> for Level <span id="technique-level">1</span></p>
+                </div>
+            </div>
+
+            <div class="attribute-card">
+                <div class="attribute-header">
+                    <div class="attribute-icon">I</div>
+                    <h3>Ingredients</h3>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 15%"></div>
+                </div>
+                <div class="stats">
+                    <p>Current Rank: Home Cook</p>
+                    <p>Hours: <span id="ingredients-hours">0</span> / <span id="ingredients-next-level">5</span> for Level <span id="ingredients-level">1</span></p>
+                </div>
+            </div>
+
+            <div class="attribute-card">
+                <div class="attribute-header">
+                    <div class="attribute-icon">F</div>
+                    <h3>Flavor</h3>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 35%"></div>
+                </div>
+                <div class="stats">
+                    <p>Current Rank: Home Cook</p>
+                    <p>Hours: <span id="flavor-hours">0</span> / <span id="flavor-next-level">5</span> for Level <span id="flavor-level">1</span></p>
+                </div>
+            </div>
+
+            <div class="attribute-card">
+                <div class="attribute-header">
+                    <div class="attribute-icon">M</div>
+                    <h3>Management</h3>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 45%"></div>
+                </div>
+                <div class="stats">
+                    <p>Current Rank: Home Cook</p>
+                    <p>Hours: <span id="management-hours">0</span> / <span id="management-next-level">5</span> for Level <span id="management-level">1</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="add-hours-card">
+            <div class="attribute-header">
+                <div class="attribute-icon">+</div>
+                <h3>Add Practice Hours</h3>
+            </div>
+            <div class="input-section">
+                <select id="attribute-select">
+                    <option value="technique">Technique</option>
+                    <option value="ingredients">Ingredients</option>
+                    <option value="flavor">Flavor</option>
+                    <option value="management">Management</option>
+                </select>
+                <input type="number" id="hours-input" min="0.5" step="0.5" value="1">
+                <button id="add-hours-button">Add Hours</button>
+                <button id="adjust-hours-button">Adjust Total</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Updated Rank and Level Definitions
+const RANKS = [
+    { name: 'Home Cook', hoursNeeded: 55, totalHoursNeeded: 220, color: '#CD7F32' },  // Bronze
+    { name: 'Culinary Student', hoursNeeded: 209, totalHoursNeeded: 836, color: '#43464B' },  // Iron
+    { name: 'Kitchen Assistant', hoursNeeded: 530, totalHoursNeeded: 2120, color: '#C0C0C0' },  // Silver
+    { name: 'Line Cook', hoursNeeded: 1177, totalHoursNeeded: 4708, color: '#FFD700' },  // Gold
+    { name: 'Sous Chef', hoursNeeded: 2500, totalHoursNeeded: 10000, color: '#E5E4E2' },  // Platinum
+    { name: 'Head Chef', hoursNeeded: Infinity, totalHoursNeeded: Infinity, color: '#FF1493' }  // Master (Rainbow)
+];
+
+const LEVELS = [
+    {
+        rank: 'Home Cook',
+        levels: [
+            { level: 1, hours: 5, startAt: 0 },
+            { level: 2, hours: 5, startAt: 5 },
+            { level: 3, hours: 5, startAt: 10 },
+            { level: 4, hours: 5, startAt: 15 },
+            { level: 5, hours: 5, startAt: 20 },
+            { level: 6, hours: 6, startAt: 25 },
+            { level: 7, hours: 7, startAt: 31 },
+            { level: 8, hours: 8, startAt: 38 },
+            { level: 9, hours: 9, startAt: 46 }
+        ]
+    },
+    {
+        rank: 'Culinary Student',
+        levels: [
+            { level: 1, hours: 10, startAt: 55 },
+            { level: 2, hours: 11, startAt: 65 },
+            { level: 3, hours: 13, startAt: 76 },
+            { level: 4, hours: 15, startAt: 89 },
+            { level: 5, hours: 17, startAt: 104 },
+            { level: 6, hours: 19, startAt: 121 },
+            { level: 7, hours: 21, startAt: 140 },
+            { level: 8, hours: 23, startAt: 161 },
+            { level: 9, hours: 25, startAt: 184 }
+        ]
+    },
+    {
+        rank: 'Kitchen Assistant',
+        levels: [
+            { level: 1, hours: 27, startAt: 209 },
+            { level: 2, hours: 29, startAt: 236 },
+            { level: 3, hours: 31, startAt: 265 },
+            { level: 4, hours: 33, startAt: 296 },
+            { level: 5, hours: 35, startAt: 329 },
+            { level: 6, hours: 37, startAt: 364 },
+            { level: 7, hours: 40, startAt: 401 },
+            { level: 8, hours: 43, startAt: 441 },
+            { level: 9, hours: 46, startAt: 484 }
+        ]
+    },
+    {
+        rank: 'Line Cook',
+        levels: [
+            { level: 1, hours: 49, startAt: 530 },
+            { level: 2, hours: 54, startAt: 579 },
+            { level: 3, hours: 59, startAt: 633 },
+            { level: 4, hours: 64, startAt: 692 },
+            { level: 5, hours: 71, startAt: 756 },
+            { level: 6, hours: 77, startAt: 827 },
+            { level: 7, hours: 83, startAt: 904 },
+            { level: 8, hours: 91, startAt: 987 },
+            { level: 9, hours: 99, startAt: 1078 }
+        ]
+    },
+    {
+        rank: 'Sous Chef',
+        levels: [
+            { level: 1, hours: 106, startAt: 1177 },
+            { level: 2, hours: 114, startAt: 1283 },
+            { level: 3, hours: 123, startAt: 1397 },
+            { level: 4, hours: 133, startAt: 1520 },
+            { level: 5, hours: 143, startAt: 1653 },
+            { level: 6, hours: 157, startAt: 1796 },
+            { level: 7, hours: 167, startAt: 1953 },
+            { level: 8, hours: 180, startAt: 2120 },
+            { level: 9, hours: 200, startAt: 2300 }
+        ]
+    },
+    {
+        rank: 'Head Chef',
+        levels: [
+            { level: 1, hours: Infinity, startAt: 2500 }
+        ]
+    }
+];
+
+        // Check if storage is available
+        function isStorageAvailable() {
+            try {
+                const test = '__storage_test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // State Management
+        const state = {
+            attributeHours: {
+                technique: 0,
+                ingredients: 0,
+                flavor: 0,
+                management: 0
+            },
+            
+            load() {
+                try {
+                    if (isStorageAvailable()) {
+                        const savedState = localStorage.getItem('culinaryRPG');
+                        if (savedState) {
+                            this.attributeHours = JSON.parse(savedState);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not load state:', error);
+                }
+            },
+            
+            save() {
+                try {
+                    if (isStorageAvailable()) {
+                        localStorage.setItem('culinaryRPG', JSON.stringify(this.attributeHours));
+                    }
+                } catch (error) {
+                    console.warn('Could not save state:', error);
+                }
+            }
+        };
+
+        // Utility Functions
+        function calculateLevel(totalHours) {
+            const minHours = Math.min(...Object.values(state.attributeHours));
+            
+            // First find what rank the minimum hours corresponds to
+            let minRank = RANKS[0];
+            for (const rank of RANKS) {
+                if (minHours < rank.hoursNeeded) {
+                    minRank = rank;
+                    break;
+                }
+            }
+
+            // If this attribute is trying to progress beyond the minimum rank, gate it
+            if (totalHours > minRank.hoursNeeded) {
+                totalHours = minRank.hoursNeeded;
+            }
+
+            // Now find the current rank based on the (possibly gated) total hours
+            let currentRank = RANKS[RANKS.length - 1];
+            for (const rank of RANKS) {
+                if (totalHours < rank.hoursNeeded) {
+                    currentRank = rank;
+                    break;
+                }
+            }
+
+            // Find level within rank
+            const rankConfig = LEVELS.find(r => r.rank === currentRank.name);
+            if (!rankConfig) return null;
+
+            for (let i = 0; i < rankConfig.levels.length; i++) {
+                const level = rankConfig.levels[i];
+                const nextLevel = rankConfig.levels[i + 1];
+                
+                if (!nextLevel || totalHours < nextLevel.startAt) {
+                    const hoursIntoLevel = totalHours - level.startAt;
+                    
+                    // If we're exactly at the start of a new rank, show 0 hours
+                    const isExactlyAtRankStart = totalHours === level.startAt;
+                    
+                    return {
+                        rank: currentRank.name,
+                        level: level.level,
+                        currentLevelHours: isExactlyAtRankStart ? 0 : hoursIntoLevel,
+                        hoursForLevel: level.hours,
+                        totalHours: totalHours,
+                        color: currentRank.color,
+                        isGated: totalHours === minRank.hoursNeeded && state.attributeHours[Object.keys(state.attributeHours).find(key => state.attributeHours[key] === totalHours)] > minRank.hoursNeeded,
+                        maxAllowedHours: minRank.hoursNeeded,
+                        isExactlyAtRankStart: isExactlyAtRankStart
+                    };
+                }
+            }
+
+            return {
+                rank: 'Head Chef',
+                level: 1,
+                currentLevelHours: totalHours - 2500,
+                hoursForLevel: Infinity,
+                totalHours: totalHours,
+                color: RANKS[RANKS.length - 1].color,
+                isGated: false,
+                isExactlyAtRankStart: false
+            };
+        }
+
+        function calculateOverallRank() {
+            const minAttributeHours = Math.min(...Object.values(state.attributeHours));
+            const totalHours = Object.values(state.attributeHours).reduce((sum, hours) => sum + hours, 0);
+            
+            // Find current rank based on minimum attribute hours (for rank name)
+            let currentRank = RANKS[0];
+            let previousRankTotal = 0;
+            
+            for (const rank of RANKS) {
+                if (minAttributeHours < rank.hoursNeeded) {
+                    currentRank = rank;
+                    break;
+                }
+                previousRankTotal = rank.totalHoursNeeded;
+            }
+            
+            // Calculate hours needed for next rank relative to current rank's start
+            const hoursIntoCurrentRank = Math.max(0, totalHours - previousRankTotal);
+            const hoursNeededForNextRank = currentRank.totalHoursNeeded - previousRankTotal;
+            
+            return {
+                name: currentRank.name,
+                color: currentRank.color,
+                totalHours: hoursIntoCurrentRank,
+                nextRankHours: hoursNeededForNextRank,
+                progress: (hoursIntoCurrentRank / hoursNeededForNextRank) * 100,
+                hoursToNextRank: hoursNeededForNextRank - hoursIntoCurrentRank
+            };
+        }
+
+        function getRankColor(hexColor) {
+            const colors = {
+                '#CD7F32': 'Bronze',  // Home Cook
+                '#43464B': 'Iron',    // Culinary Student
+                '#C0C0C0': 'Silver',  // Kitchen Assistant
+                '#FFD700': 'Gold',    // Line Cook
+                '#E5E4E2': 'Platinum', // Sous Chef
+                '#FF1493': 'Rainbow'   // Head Chef
+            };
+            return colors[hexColor] || 'Unknown';
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function findAttributeCard(attribute) {
+            return Array.from(document.querySelectorAll('.attribute-card')).find(card => 
+                card.querySelector('h3').textContent.toLowerCase() === attribute
+            );
+        }
+
+        // UI Update Function
+        function updateDisplay() {
+            // Update overall rank display
+            const overallRank = calculateOverallRank();
+            document.getElementById('overall-rank').textContent = `${overallRank.name} (${getRankColor(overallRank.color)})`;
+            document.getElementById('overall-hours').textContent = Math.floor(overallRank.totalHours);
+            document.getElementById('overall-next-rank').textContent = overallRank.nextRankHours;
+            
+            // Update overall progress bar
+            const overallProgressBar = document.querySelector('.overall-rank-card .progress-fill');
+            overallProgressBar.style.width = `${Math.min(overallRank.progress, 100)}%`;
+            overallProgressBar.style.backgroundColor = overallRank.color;
+
+            // Update each attribute card
+            Object.keys(state.attributeHours).forEach(attribute => {
+                const totalHours = state.attributeHours[attribute];
+                const levelInfo = calculateLevel(totalHours);
+                
+                const card = findAttributeCard(attribute);
+                if (card) {
+                    const progressFill = card.querySelector('.progress-fill');
+                    const stats = card.querySelector('.stats');
+                    
+                    // Update progress bar - show empty if exactly at rank start
+                    const progressPercent = levelInfo.isExactlyAtRankStart ? 0 : 
+                        (levelInfo.currentLevelHours / levelInfo.hoursForLevel) * 100;
+                    progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
+                    progressFill.style.backgroundColor = levelInfo.color;
+                    
+                    // Update text displays
+                    document.getElementById(`${attribute}-hours`).textContent = 
+                        Math.floor(levelInfo.currentLevelHours);
+                    document.getElementById(`${attribute}-next-level`).textContent = 
+                        levelInfo.hoursForLevel;
+                    document.getElementById(`${attribute}-level`).textContent = 
+                        levelInfo.level;
+                    
+                    // Update rank display in stats
+                    stats.querySelector('p:first-child').textContent = `Current Rank: ${levelInfo.rank}`;
+                    
+                    // Show gating warning if applicable
+                    let warningDiv = card.querySelector('.gated-warning');
+                    if (levelInfo.isGated) {
+                        if (!warningDiv) {
+                            warningDiv = document.createElement('div');
+                            warningDiv.className = 'gated-warning';
+                            card.appendChild(warningDiv);
+                        }
+                        warningDiv.textContent = `Progress gated until all attributes reach ${levelInfo.rank}`;
+                    } else if (warningDiv) {
+                        warningDiv.remove();
+                    }
+                }
+            });
+        }
+
+        // Event Handler
+        function handleAddHours() {
+            const elements = {
+                attributeSelect: document.getElementById('attribute-select'),
+                hoursInput: document.getElementById('hours-input')
+            };
+            
+            if (!Object.values(elements).every(Boolean)) {
+                console.error('Missing required elements');
+                return;
+            }
+            
+            const formData = {
+                attribute: elements.attributeSelect.value,
+                hours: parseFloat(elements.hoursInput.value)
+            };
+            
+            if (formData.hours <= 0) {
+                alert('Please enter a valid number of hours');
+                return;
+            }
+            
+            try {
+                // Get minimum hours across all attributes
+                const minHours = Math.min(...Object.values(state.attributeHours));
+                
+                // Find minimum rank
+                let minRank = RANKS[0];
+                for (const rank of RANKS) {
+                    if (minHours < rank.hoursNeeded) {
+                        minRank = rank;
+                        break;
+                    }
+                }
+
+                const proposedTotal = state.attributeHours[formData.attribute] + formData.hours;
+                
+                // Check if this would exceed the gate
+                if (proposedTotal > minRank.hoursNeeded) {
+                    alert(`Cannot progress past ${minRank.name} rank (${minRank.hoursNeeded} hours) until all attributes reach this rank.`);
+                    // Set hours to maximum allowed if not already there
+                    if (state.attributeHours[formData.attribute] < minRank.hoursNeeded) {
+                        state.attributeHours[formData.attribute] = minRank.hoursNeeded;
+                        state.save();
+                        updateDisplay();
+                    }
+                    return;
+                }
+                
+                // Update hours if we haven't hit the gate
+                state.attributeHours[formData.attribute] = proposedTotal;
+                state.save();
+                
+                // Reset form
+                elements.hoursInput.value = '1';
+                
+                // Update UI
+                updateDisplay();
+                
+            } catch (error) {
+                console.error('Error in addHours:', error);
+                alert('Failed to save progress. Please try again.');
+            }
+        }
+
+        // Initialize
+        function initializeApp() {
+    state.load();
+    
+    const addHoursButton = document.getElementById('add-hours-button');
+    const adjustHoursButton = document.getElementById('adjust-hours-button');
+    
+    if (addHoursButton) {
+        addHoursButton.addEventListener('click', handleAddHours);
+    }
+    
+    if (adjustHoursButton) {
+        adjustHoursButton.addEventListener('click', handleAdjustHours);
+    }
+    
+    updateDisplay();
+}
+        // Adjust Hours
+        async function handleAdjustHours() {
+    const attribute = document.getElementById('attribute-select').value;
+    const currentHours = state.attributeHours[attribute];
+    
+    const newHours = prompt(
+        `Current hours for ${capitalize(attribute)}: ${currentHours}\nEnter new total hours:`,
+        currentHours
+    );
+    
+    if (newHours === null) return; // User cancelled
+    
+    const newHoursNum = parseFloat(newHours);
+    if (isNaN(newHoursNum) || newHoursNum < 0) {
+        alert('Please enter a valid number of hours');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to set ${capitalize(attribute)} to ${newHoursNum} hours?`)) {
+        state.attributeHours[attribute] = newHoursNum;
+        state.save();
+        updateDisplay();
+    }
+}
+        // Start the application when DOM is ready
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
