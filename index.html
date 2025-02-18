@@ -852,8 +852,147 @@ const questSystem = {
         currentQuest.classList.remove('hidden');
     }
 };
+// Define test quest data
+const QUEST_DATA = [
+    {
+        id: 1,
+        questName: "Basic Knife Skills",
+        rank: "Home Cook",
+        type: "Training",
+        primaryFocus: "Technique",
+        secondaryFocus: "Management",
+        primaryHours: 1,
+        secondaryHours: 0.5,
+        diceRequired: true,
+        description: "Practice basic knife cuts with vegetables"
+    },
+    {
+        id: 2,
+        questName: "Simple Sauté",
+        rank: "Home Cook",
+        type: "Main",
+        primaryFocus: "Technique",
+        secondaryFocus: "Flavor",
+        primaryHours: 1.5,
+        secondaryHours: 0.5,
+        diceRequired: true,
+        description: "Master the basic sauté technique with your choice of protein"
+    },
+    {
+        id: 3,
+        questName: "Mise en Place",
+        rank: "Home Cook",
+        type: "Training",
+        primaryFocus: "Management",
+        secondaryFocus: "Technique",
+        primaryHours: 1,
+        secondaryHours: 0.5,
+        diceRequired: false,
+        description: "Practice proper ingredient preparation and organization"
+    }
+];
 
-// Update initializeApp function
+// Quest System
+const questSystem = {
+    currentQuest: null,
+    
+    initialize() {
+        console.log('Initializing quest system...'); // Debug log
+        const randomButton = document.getElementById('random-quest');
+        const viewAllButton = document.getElementById('view-all-quests');
+        
+        if (randomButton) {
+            randomButton.addEventListener('click', () => {
+                console.log('Random quest button clicked'); // Debug log
+                this.selectRandomQuest();
+            });
+        } else {
+            console.error('Random quest button not found');
+        }
+        
+        if (viewAllButton) {
+            viewAllButton.addEventListener('click', () => {
+                console.log('View all button clicked'); // Debug log
+                this.showQuestList();
+            });
+        } else {
+            console.error('View all button not found');
+        }
+        
+        // Initial render
+        this.showQuestList();
+    },
+    
+    selectRandomQuest() {
+        const randomIndex = Math.floor(Math.random() * QUEST_DATA.length);
+        this.showQuestDetails(QUEST_DATA[randomIndex]);
+    },
+    
+    showQuestList() {
+        const questList = document.getElementById('quest-list');
+        const currentQuest = document.getElementById('current-quest');
+        
+        if (!questList || !currentQuest) {
+            console.error('Required elements not found');
+            return;
+        }
+        
+        questList.innerHTML = QUEST_DATA.map(quest => `
+            <div class="quest-item" onclick="questSystem.showQuestDetails(${JSON.stringify(quest).replace(/"/g, '&quot;')})">
+                <h4 class="font-semibold mb-1">${quest.questName}</h4>
+                <p class="text-sm text-gray-600">${quest.type}</p>
+            </div>
+        `).join('');
+        
+        questList.classList.remove('hidden');
+        currentQuest.classList.add('hidden');
+    },
+    
+    showQuestDetails(quest) {
+        const questList = document.getElementById('quest-list');
+        const currentQuest = document.getElementById('current-quest');
+        
+        if (!questList || !currentQuest) {
+            console.error('Required elements not found');
+            return;
+        }
+        
+        currentQuest.innerHTML = `
+            <div class="quest-details">
+                <div class="quest-header">
+                    <div>
+                        <h4 class="text-xl font-bold mb-1">${quest.questName}</h4>
+                        <p class="text-sm text-gray-600">${quest.rank} • ${quest.type}</p>
+                    </div>
+                    ${quest.diceRequired ? `
+                        <div class="quest-dice-required">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h14V5H5zm4.5 6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-5 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                            </svg>
+                            Dice Roll Required
+                        </div>
+                    ` : ''}
+                </div>
+                <p class="text-gray-700 mb-4">${quest.description}</p>
+                <div class="quest-focus-grid">
+                    <div class="focus-box primary">
+                        <p class="text-sm font-semibold text-blue-700">Primary Focus</p>
+                        <p class="text-lg">${quest.primaryFocus} • ${quest.primaryHours}h</p>
+                    </div>
+                    <div class="focus-box secondary">
+                        <p class="text-sm font-semibold text-green-700">Secondary Focus</p>
+                        <p class="text-lg">${quest.secondaryFocus} • ${quest.secondaryHours}h</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        questList.classList.add('hidden');
+        currentQuest.classList.remove('hidden');
+    }
+};
+        
+// Update the initializeApp function to include quest system initialization
 function initializeApp() {
     state.load();
     
