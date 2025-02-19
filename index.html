@@ -529,6 +529,14 @@
     color: #333;
 }
     </style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#A2BC58">
+
 </head>
 <body>
     <div class="dashboard">
@@ -2862,6 +2870,9 @@ function initializeApp() {
     
     // Initialize quest system
     questSystem.initialize();
+
+    // Add backup UI
+    addBackupControls();
     
     updateDisplay();
 }
@@ -2892,6 +2903,132 @@ function initializeApp() {
 }
         // Start the application when DOM is ready
         document.addEventListener('DOMContentLoaded', initializeApp);
+    
+    // Functions for exporting and importing data
+function exportProgress() {
+    try {
+        // Get current state
+        const dataToExport = {
+            attributeHours: state.attributeHours,
+            completedQuests: state.completedQuests,
+            exportDate: new Date().toISOString(),
+            version: '1.0.0' // Add versioning for future compatibility
+        };
+        
+        // Convert to JSON string
+        const jsonData = JSON.stringify(dataToExport, null, 2);
+        
+        // Create download link
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        
+        // Set filename with date
+        const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        downloadLink.download = `diced_rpg_progress_${date}.json`;
+        downloadLink.href = url;
+        
+        // Trigger download
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+        
+        alert('Progress exported successfully! Keep this file safe to restore your progress if needed.');
+    } catch (error) {
+        console.error('Export failed:', error);
+        alert('Failed to export progress. Please try again.');
+    }
+}
+
+// Function to import state from file
+function importProgress() {
+    // Create file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    
+    fileInput.onchange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // Validate imported data structure
+                if (!importedData.attributeHours || !importedData.completedQuests) {
+                    throw new Error('Invalid data format');
+                }
+                
+                // Confirm import
+                if (confirm(`Import progress from ${new Date(importedData.exportDate).toLocaleString()}?\n\nThis will replace your current progress.`)) {
+                    // Update state
+                    state.attributeHours = importedData.attributeHours;
+                    state.completedQuests = importedData.completedQuests;
+                    state.save();
+                    updateDisplay();
+                    alert('Progress imported successfully!');
+                    
+                    // Add automatic backup
+                    localStorage.setItem('culinaryRPG_backup', JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        data: state
+                    }));
+                }
+            } catch (error) {
+                console.error('Import failed:', error);
+                alert('Failed to import progress. The file may be corrupted or invalid.');
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    // Trigger file selection
+    fileInput.click();
+}
+
+// Function to add backup UI controls
+function addBackupControls() {
+    const dashboard = document.querySelector('.dashboard');
+    const addHoursCard = document.querySelector('.add-hours-card');
+    
+    // Create backup controls card
+    const backupCard = document.createElement('div');
+    backupCard.className = 'add-hours-card';
+    backupCard.innerHTML = `
+        <div class="attribute-header">
+            <div class="attribute-icon">💾</div>
+            <h3>Progress Backup</h3>
+        </div>
+        <p class="stats">Protect your progress from browser data clearing</p>
+        <div class="input-section">
+            <button id="export-progress-button">Export Progress</button>
+            <button id="import-progress-button">Import Progress</button>
+        </div>
+    `;
+    
+    // Insert before add hours card
+    dashboard.insertBefore(backupCard, addHoursCard.nextSibling);
+    
+    // Add event listeners
+    document.getElementById('export-progress-button').addEventListener('click', exportProgress);
+    document.getElementById('import-progress-button').addEventListener('click', importProgress);
+}
+
+    // Register service worker for PWA functionality
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
     </script>
 </body>
 </html>
