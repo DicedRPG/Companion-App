@@ -15,7 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--<meta http-equiv="Content-Security-Policy" content="sandbox allow-same-origin allow-scripts"> -->
-    <title>Diced:RPG Companion</title>
+    <title>Diced</title>
     
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
@@ -36,7 +36,7 @@
 
         <div class="overall-rank-card">
             <div class="attribute-header">
-                <div class="attribute-icon">O</div>
+                <div class="attribute-icon-overall"></div>
                 <h3>Overall Rank</h3>
             </div>
             <div class="progress-bar">
@@ -51,7 +51,7 @@
         <div class="attributes-grid">
             <div class="attribute-card">
                 <div class="attribute-header">
-                    <div class="attribute-icon">T</div>
+                    <div class="attribute-icon"></div>
                     <h3>Technique</h3>
                 </div>
                 <div class="progress-bar">
@@ -65,7 +65,7 @@
 
             <div class="attribute-card">
                 <div class="attribute-header">
-                    <div class="attribute-icon">I</div>
+                    <div class="attribute-icon"></div>
                     <h3>Ingredients</h3>
                 </div>
                 <div class="progress-bar">
@@ -79,7 +79,7 @@
 
             <div class="attribute-card">
                 <div class="attribute-header">
-                    <div class="attribute-icon">F</div>
+                    <div class="attribute-icon"></div>
                     <h3>Flavor</h3>
                 </div>
                 <div class="progress-bar">
@@ -93,7 +93,7 @@
 
             <div class="attribute-card">
                 <div class="attribute-header">
-                    <div class="attribute-icon">M</div>
+                    <div class="attribute-icon"></div>
                     <h3>Management</h3>
                 </div>
                 <div class="progress-bar">
@@ -140,7 +140,7 @@
         
         <div class="add-hours-card">
             <div class="attribute-header">
-                <div class="attribute-icon">+</div>
+                <div class="attribute-icon-else">+</div>
                 <h3>Add Practice Hours</h3>
             </div>
             <div class="input-section">
@@ -244,6 +244,30 @@
             });
         });
         }
+
+        // Check for updates
+        function checkForUpdates() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistration().then(reg => {
+            if (reg) reg.update().catch(err => console.error('Error checking for updates:', err));
+            });
+        }
+        }
+
+        // Add update detection
+        if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // New service worker activated
+            window.location.reload(); // Reload the page to get new content
+        });
+        
+        // Check for updates when the page loads and periodically
+        checkForUpdates();
+        setInterval(checkForUpdates, 60 * 60 * 1000); // Check hourly
+        }
+
+        // Make the function available globally for the update button
+        window.checkForUpdates = checkForUpdates;
     </script>
 </body>
 </html>

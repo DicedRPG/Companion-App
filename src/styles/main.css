@@ -29,7 +29,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 20px;
-    /*background-image: url('./assets/header-bg.jpg');
+    /*background-image: url('./assets/header-bg.jpg'); Image behind Header Text
     background-size: cover;
     background-position: center;
     position: relative;
@@ -43,7 +43,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.7); transparent overlay for text header
     z-index: 0;
 }*/
 
@@ -85,6 +85,30 @@ body {
 }
 
 .attribute-icon {
+    width: 50px;
+    height: 50px;
+    background-image: url('./assets/icon-50x50.png');
+    /*background-color: var(--primary-color);*/
+    /*border-radius: 50%;*/
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.attribute-icon-overall {
+    width: 72px;
+    height: 72px;
+    background-image: url('./assets/icon-72x72.png');
+    /*background-color: var(--primary-color);*/
+    /*border-radius: 50%;*/
+    display: fixed;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.attribute-icon-else {
     width: 24px;
     height: 24px;
     background-color: var(--primary-color);
