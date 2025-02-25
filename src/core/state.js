@@ -1,4 +1,7 @@
-// Initial state structure
+// src/core/state.js
+const STORAGE_KEY = 'diced_rpg_state';
+
+// Initial state
 const initialState = {
     attributeHours: {
         technique: 0,
@@ -7,84 +10,129 @@ const initialState = {
         management: 0
     },
     completedQuests: [],
-    settings: {
-        notifications: true,
-        autoSave: true
-    }
+    visibleQuests: [], // For quest progression system
+    pathProgress: {}, // For quest path system
+    adminMode: false, // For admin features
+    currentView: 'list', // For UI state tracking ('list', 'path', 'adventure')
+    lastUpdate: new Date().toISOString()
 };
 
-// Create store function
-function createStore() {
-    let state = {...initialState};
-    const listeners = new Set();
+// Store implementation
+class Store {
+    constructor() {
+        this._state = {...initialState};
+        this._listeners = [];
+    }
     
-    return {
-        getState() {
-            return state;
-        },
+    // Get current state (immutable)
+    getState() {
+        return {...this._state};
+    }
+    
+    // Set entire state at once
+    setState(newState) {
+        this._state = {...newState};
+        this._notifyListeners();
+        this._saveToStorage();
+    }
+    
+    // Update specific part of state (supports dot notation for nested properties)
+    updateState(path, value) {
+        // Handle dot notation path ('object.nestedProp')
+        const parts = path.split('.');
+        let current = this._state;
+        const lastKey = parts.pop();
         
-        setState(newState) {
-            console.log('Setting state:', newState); // Debug log
-            state = {
-                ...state,
-                ...newState
-            };
-            this.saveToStorage();
-            listeners.forEach(listener => listener(state));
-        },
-        
-        updateState(path, value) {
-            console.log('Updating state path:', path, 'value:', value); // Debug log
-            const parts = path.split('.');
-            let current = {...state};
-            const newState = current;
-            
-            // Navigate to the correct part of the state
-            for (let i = 0; i < parts.length - 1; i++) {
-                current[parts[i]] = {...(current[parts[i]] || {})};
-                current = current[parts[i]];
+        // Navigate to the right level
+        for (const key of parts) {
+            if (current[key] === undefined) {
+                current[key] = {};
             }
-            
-            // Set the new value
-            current[parts[parts.length - 1]] = value;
-            
-            // Update state
-            this.setState(newState);
-        },
-        
-        subscribe(listener) {
-            listeners.add(listener);
-            return () => listeners.delete(listener);
-        },
-        
-        saveToStorage() {
-            try {
-                localStorage.setItem('dicedRPG_state', JSON.stringify(state));
-                console.log('State saved to storage:', state); // Debug log
-            } catch (error) {
-                console.error('Failed to save state:', error);
-            }
-        },
-        
-        loadFromStorage() {
-            try {
-                const savedState = localStorage.getItem('dicedRPG_state');
-                if (savedState) {
-                    state = JSON.parse(savedState);
-                    console.log('State loaded from storage:', state); // Debug log
-                    listeners.forEach(listener => listener(state));
-                }
-            } catch (error) {
-                console.error('Failed to load state:', error);
-            }
-        },
-        
-        resetState() {
-            state = {...initialState};
-            this.saveToStorage();
-            listeners.forEach(listener => listener(state));
+            current = current[key];
         }
-    };
+        
+        // Set the value
+        current[lastKey] = value;
+        
+        this._notifyListeners();
+        this._saveToStorage();
+    }
+    
+    // Add a listener function
+    subscribe(listenerFn) {
+        this._listeners.push(listenerFn);
+        
+        // Return unsubscribe function
+        return () => {
+            this._listeners = this._listeners.filter(fn => fn !== listenerFn);
+        };
+    }
+    
+    // Notify all listeners
+    _notifyListeners() {
+        this._listeners.forEach(listener => listener(this._state));
+    }
+    
+    // Save state to localStorage
+    _saveToStorage() {
+        try {
+            // Update last modified timestamp
+            this._state.lastUpdate = new Date().toISOString();
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this._state));
+        } catch (error) {
+            console.error('Failed to save state to storage:', error);
+        }
+    }
+    
+    // Load state from localStorage
+    loadFromStorage() {
+        try {
+            const savedState = localStorage.getItem(STORAGE_KEY);
+            if (savedState) {
+                const parsed = JSON.parse(savedState);
+                
+                // Merge saved state with initial state to ensure all properties exist
+                this._state = this._mergeWithInitial(parsed);
+                this._notifyListeners();
+            }
+        } catch (error) {
+            console.error('Failed to load state from storage:', error);
+        }
+    }
+    
+    // Helper to ensure all required properties exist
+    _mergeWithInitial(savedState) {
+        // Start with a fresh initial state
+        const result = JSON.parse(JSON.stringify(initialState));
+        
+        // Recursively merge saved state
+        const deepMerge = (target, source) => {
+            for (const key in source) {
+                if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                    // If the key doesn't exist in target or isn't an object, create it
+                    if (!target[key] || typeof target[key] !== 'object') {
+                        target[key] = {};
+                    }
+                    deepMerge(target[key], source[key]);
+                } else {
+                    // For arrays and primitive values, replace completely
+                    target[key] = source[key];
+                }
+            }
+        };
+        
+        deepMerge(result, savedState);
+        return result;
+    }
+    
+    // Reset all state to initial values
+    resetState() {
+        this._state = JSON.parse(JSON.stringify(initialState));
+        this._notifyListeners();
+        this._saveToStorage();
+    }
 }
 
-export const store = createStore();
+// Create and export store singleton
+export const store = new Store();
