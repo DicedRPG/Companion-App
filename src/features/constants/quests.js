@@ -182,15 +182,15 @@ export const QUEST_DATA = [
       },
       {
         "id": 16,
-        "questName": "Easy Pasta Dinner",
+        "questName": "Simple Breakfast",
         "rank": "Home Cook",
         "type": "Main",
         "primaryFocus": "Technique",
         "secondaryFocus": "Management",
-        "primaryHours": 2,
+        "primaryHours": 1.5,
         "secondaryHours": 1,
         "diceRequired": true,
-        "description": "Cook a simple pasta dish with sauce and protein"
+        "description": "Prepare eggs toast and a simple side"
       },
       {
         "id": 17,
@@ -230,15 +230,15 @@ export const QUEST_DATA = [
       },
       {
         "id": 20,
-        "questName": "Simple Breakfast",
+        "questName": "Easy Pasta Dinner",
         "rank": "Home Cook",
         "type": "Main",
         "primaryFocus": "Technique",
         "secondaryFocus": "Management",
-        "primaryHours": 1.5,
+        "primaryHours": 2,
         "secondaryHours": 1,
         "diceRequired": true,
-        "description": "Prepare eggs toast and a simple side"
+        "description": "Cook a simple pasta dish with sauce and protein"
       },
       {
         "id": 21,
