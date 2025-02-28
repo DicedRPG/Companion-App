@@ -149,6 +149,15 @@ body {
     color: white;
 }
 
+.quest-emblem {
+    width: 50px;
+    height: 50px;
+    background-image: url('./assets/icon-50x50.png'); /* Or your quest icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .add-hours-card {
     background-color: white;
     padding: 20px;
@@ -220,18 +229,22 @@ body {
 .quest-card .attribute-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
     width: 100%;
-    justify-content: flex-start;
+    margin-bottom: 15px;
+    padding: 0;
+    background: none;
+    box-shadow: none;
 }
 
 .quest-card .attribute-header h3 {
-    flex-grow: 1;
+    margin-right: auto; /* Push the title to the left */
+    flex-shrink: 0; /* Prevent the title from shrinking */
 }
 
 .quest-card .attribute-header .button-group {
-    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    margin-left: auto; /* Push the buttons to the right */
 }
 
 .quest-card .header:before {
