@@ -247,6 +247,32 @@ body {
     margin-left: auto; /* Push the buttons to the right */
 }
 
+@media (max-width: 768px) {
+    .quest-card .attribute-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .quest-card .attribute-header h3 {
+        margin-right: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .quest-card .attribute-header .button-group {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Make the title and icon stay on the same line */
+    .quest-card .attribute-header .quest-emblem {
+        margin-right: 10px;
+    }
+}
+    
 .quest-card .header:before {
     display: none;
 }
