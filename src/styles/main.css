@@ -247,29 +247,31 @@ body {
     margin-left: auto; /* Push the buttons to the right */
 }
 
-@media (max-width: 768px) {
-    .quest-card .attribute-header {
-        flex-direction: column;
-        align-items: flex-start;
+.quest-card .attribute-header {
+        flex-wrap: wrap; /* Allow items to wrap to next line */
         gap: 15px;
     }
     
+    /* Keep the emblem and title together */
     .quest-card .attribute-header h3 {
-        margin-right: 0;
-        display: flex;
+        display: inline-flex; /* Keep inline with emblem */
         align-items: center;
-        gap: 10px;
+        margin-right: 0;
     }
     
+    /* Move button group to its own line */
     .quest-card .attribute-header .button-group {
         margin-left: 0;
-        width: 100%;
+        width: 100%; /* Full width on its own line */
+        order: 2; /* Push to second row */
         justify-content: space-between;
     }
-
-    /* Make the title and icon stay on the same line */
-    .quest-card .attribute-header .quest-emblem {
-        margin-right: 10px;
+    
+    /* Make buttons more touch-friendly */
+    .quest-card .attribute-header .button-group .quest-button {
+        flex-grow: 1;
+        text-align: center;
+        justify-content: center;
     }
 }
     
